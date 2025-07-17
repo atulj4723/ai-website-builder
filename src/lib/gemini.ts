@@ -6,14 +6,22 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 const baseDir = "./public";
 
 // ---------------- File Handlers ----------------
-const create_File = ({ fileName, content }: { fileName: string; content: string }) => {
+const create_File = ({
+    fileName,
+    content,
+}: {
+    fileName: string;
+    content: string;
+}) => {
     fs.writeFileSync(path.join(baseDir, fileName), content);
     return `✅ Created ${fileName}`;
 };
 
 const read_File = ({ fileName }: { fileName: string }) => {
     const filePath = path.join(baseDir, fileName);
-    return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf-8") : `❌ ${fileName} not found`;
+    return fs.existsSync(filePath)
+        ? fs.readFileSync(filePath, "utf-8")
+        : `❌ ${fileName} not found`;
 };
 
 const delete_File = ({ fileName }: { fileName: string }) => {
@@ -27,7 +35,13 @@ const delete_File = ({ fileName }: { fileName: string }) => {
 
 const list_Files = () => fs.readdirSync(baseDir).join(", ");
 
-const append_File = ({ fileName, content }: { fileName: string; content: string }) => {
+const append_File = ({
+    fileName,
+    content,
+}: {
+    fileName: string;
+    content: string;
+}) => {
     const filePath = path.join(baseDir, fileName);
     if (fs.existsSync(filePath)) {
         fs.appendFileSync(filePath, content);
@@ -68,103 +82,104 @@ const get_preview_link = ({ folder }: { folder: string }) => {
 };
 
 // ---------------- Tools ----------------
-const tools = [
-    {
-        functionDeclarations: [
-            {
-                name: "create_File",
-                description: "Create file with content",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                        fileName: { type: Type.STRING },
-                        content: { type: Type.STRING },
-                    },
-                    required: ["fileName", "content"],
+const tools = {
+    functionDeclarations: [
+        {
+            name: "create_File",
+            description: "Create file with content",
+            parameters: {
+                type: Type.OBJECT,
+                properties: {
+                    fileName: { type: Type.STRING },
+                    content: { type: Type.STRING },
                 },
+                required: ["fileName", "content"],
             },
-            {
-                name: "read_File",
-                description: "Read a file",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                        fileName: { type: Type.STRING },
-                    },
-                    required: ["fileName"],
+        },
+        {
+            name: "read_File",
+            description: "Read a file",
+            parameters: {
+                type: Type.OBJECT,
+                properties: {
+                    fileName: { type: Type.STRING },
                 },
+                required: ["fileName"],
             },
-            {
-                name: "delete_File",
-                description: "Delete a file",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                        fileName: { type: Type.STRING },
-                    },
-                    required: ["fileName"],
+        },
+        {
+            name: "delete_File",
+            description: "Delete a file",
+            parameters: {
+                type: Type.OBJECT,
+                properties: {
+                    fileName: { type: Type.STRING },
                 },
+                required: ["fileName"],
             },
-            {
-                name: "list_Files",
-                description: "List all files",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {},
+        },
+        {
+            name: "list_Files",
+            description: "List all files",
+            parameters: {
+                type: Type.OBJECT,
+                properties: {},
+            },
+        },
+        {
+            name: "append_File",
+            description: "Append content to file",
+            parameters: {
+                type: Type.OBJECT,
+                properties: {
+                    fileName: { type: Type.STRING },
+                    content: { type: Type.STRING },
                 },
+                required: ["fileName", "content"],
             },
-            {
-                name: "append_File",
-                description: "Append content to file",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                        fileName: { type: Type.STRING },
-                        content: { type: Type.STRING },
-                    },
-                    required: ["fileName", "content"],
-                },
-            },
-            {
-                name: "generate_MultiPageWebsite",
-                description: "Generate multi-page HTML/CSS/JS website.",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                        pages: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    name: { type: Type.STRING },
-                                    content: { type: Type.STRING },
-                                },
-                                required: ["name", "content"],
+        },
+        {
+            name: "generate_MultiPageWebsite",
+            description: "Generate multi-page HTML/CSS/JS website.",
+            parameters: {
+                type: Type.OBJECT,
+                properties: {
+                    pages: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                name: { type: Type.STRING },
+                                content: { type: Type.STRING },
                             },
-                        },
-                        folder: {
-                            type: Type.STRING,
+                            required: ["name", "content"],
                         },
                     },
-                    required: ["pages", "folder"],
-                },
-            },
-            {
-                name: "get_preview_link",
-                description: "Get preview link for generated website",
-                parameters: {
-                    type: Type.OBJECT,
-                    properties: {
-                        folder: { type: Type.STRING },
+                    folder: {
+                        type: Type.STRING,
                     },
-                    required: ["folder"],
                 },
+                required: ["pages", "folder"],
             },
-        ],
-    },
-];
+        },
+        {
+            name: "get_preview_link",
+            description: "Get preview link for generated website",
+            parameters: {
+                type: Type.OBJECT,
+                properties: {
+                    folder: { type: Type.STRING },
+                },
+                required: ["folder"],
+            },
+        },
+    ],
+};
 
-const toolFunctions: Record<string, (...args: any[]) => string | { link: string; message: string }> = {
+const toolFunctions: Record<
+    string,
+    (...args: any[]) => string | { link: string; message: string }
+> = {
     create_File,
     read_File,
     delete_File,
@@ -176,11 +191,33 @@ const toolFunctions: Record<string, (...args: any[]) => string | { link: string;
 
 const systemInstruction = `
 You are an intelligent AI file assistant with access to tools for file system operations and website generation.
-Use tools with correct arguments. Content must be full valid HTML documents.
+
+Use tools with correct arguments:
+
+- create_File: { fileName: "index.html", content: "<h1>Hello</h1>" }
+- read_File: { fileName: "index.html" }
+- delete_File: { fileName: "test.txt" }
+- list_Files: {}
+- append_File: { fileName: "log.txt", content: "extra data" }
+- generate_MultiPageWebsite: {
+    pages: [
+        { name: "index.html", content: "<!DOCTYPE html><html><head><title>home</title></head><body>some content</body></html>" },
+        {name:"index.js",content:"console.log("hello world")"},
+        {name:"style.css",content:"body{background-color:red;}"}
+        { name: "about.html", content: "<!DOCTYPE html><html><head><title>about</title></head><body>some content</body></html>" }
+    ],
+    folder: "my-website"
+  }
+Content must be complete HTML documents with valid HTML, CSS, and JS included.
+Always ensure valid responses, and if tool usage fails, attempt clarification or retries.
+If a preview is requested, call get_preview_link with the folder used in generation.
 `;
 
 // ---------------- Types ----------------
-type Part = { text?: string; functionResponse?: { name: string; response: { result: string } } };
+type Part = {
+    text?: string;
+    functionResponse?: { name: string; response: { result: string } };
+};
 type Message = {
     role: "user" | "model";
     parts: Part[];
@@ -188,7 +225,10 @@ type Message = {
 };
 
 // ---------------- Main Function ----------------
-export async function runGemini(userInput: Message[], retries = 0): Promise<Message[]> {
+export async function runGemini(
+    userInput: Message[],
+    retries = 0
+): Promise<Message[]> {
     const MAX_RETRIES = 10;
 
     if (retries >= MAX_RETRIES) {
@@ -200,12 +240,15 @@ export async function runGemini(userInput: Message[], retries = 0): Promise<Mess
     }
 
     try {
-        const validInput = userInput.filter((msg) => msg.parts && Array.isArray(msg.parts) && msg.parts.length > 0);
+        const validInput = userInput.filter(
+            (msg) =>
+                msg.parts && Array.isArray(msg.parts) && msg.parts.length > 0
+        );
 
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: validInput,
-            config: { tools, systemInstruction },
+            config: { tools: [tools], systemInstruction },
         });
 
         const functionCall = response.functionCalls?.[0];
@@ -224,7 +267,14 @@ export async function runGemini(userInput: Message[], retries = 0): Promise<Mess
             userInput.push({ role: "model", parts: [{ functionCall }] });
             userInput.push({
                 role: "user",
-                parts: [{ functionResponse: { name, response: { result: String(result) } } }],
+                parts: [
+                    {
+                        functionResponse: {
+                            name,
+                            response: { result: String(result) },
+                        },
+                    },
+                ],
             });
 
             return await runGemini(userInput, retries + 1);
