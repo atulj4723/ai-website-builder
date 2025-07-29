@@ -83,7 +83,6 @@ const get_preview_link = ({ folder }: { folder: string }) => {
 
 // ---------------- Tools ----------------
 
-
 const toolFunctions: Record<
     string,
     (...args: any[]) => string | { link: string; message: string }
@@ -277,6 +276,10 @@ export async function runGemini(
             }
 
             const result = toolFunctions[name](args);
+            const resultText =
+                name === "get_preview_link"
+                    ? JSON.stringify(result)
+                    : String(result);
 
             userInput.push({ role: "model", parts: [{ functionCall }] });
             userInput.push({
@@ -285,7 +288,7 @@ export async function runGemini(
                     {
                         functionResponse: {
                             name,
-                            response: { result: String(result) },
+                            response: { result: resultText },
                         },
                     },
                 ],

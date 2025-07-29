@@ -14,9 +14,9 @@ const GeneratorPage = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         // Scroll to the bottom when messages change
-        // if (messagesEndRef.current) {
-        //     messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-        // }
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
     }, [messages]);
     const handleSend = async () => {
         if (!input.trim()) return;
@@ -38,9 +38,9 @@ const GeneratorPage = () => {
             setMessages(data.messages || []); // Update messages with AI response
             // if (data.text) {
             // }
-            // if (data.url) {
-            //     setLink(data.url);
-            // }
+            if (data.url) {
+                setLink(data.url);
+            }
         } catch (error) {
             console.log("Error talking to AI:", error);
             setMessages((prev) => [

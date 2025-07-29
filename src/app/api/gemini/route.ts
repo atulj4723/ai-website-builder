@@ -11,9 +11,30 @@ export async function POST(req: Request) {
         }
 
         const result = await runGemini(messages);
+
+        // Extract preview link (if any) from any message with a functionResponse for get_preview_link.
+        let url = "";
+        for (const msg of result) {
+            for (const part of msg.parts) {
+                if (
+                    part.functionResponse &&
+                    part.functionResponse.name === "get_preview_link"
+                ) {
+                    try {
+                        const previewData = JSON.parse(
+                            part.functionResponse.response.result
+                        );
+                        if (previewData.link) {
+                            url = previewData.link;
+                        }
+                    } catch {}
+                }
+            }
+        }
+
         console.log("AI response:", result);
         return Response.json(
-            { success: true, messages: result },
+            { success: true, messages: result, url },
             { status: 200 }
         );
     } catch (err) {
