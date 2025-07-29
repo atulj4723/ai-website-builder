@@ -82,99 +82,7 @@ const get_preview_link = ({ folder }: { folder: string }) => {
 };
 
 // ---------------- Tools ----------------
-const tools = {
-    functionDeclarations: [
-        {
-            name: "create_File",
-            description: "Create file with content",
-            parameters: {
-                type: Type.OBJECT,
-                properties: {
-                    fileName: { type: Type.STRING },
-                    content: { type: Type.STRING },
-                },
-                required: ["fileName", "content"],
-            },
-        },
-        {
-            name: "read_File",
-            description: "Read a file",
-            parameters: {
-                type: Type.OBJECT,
-                properties: {
-                    fileName: { type: Type.STRING },
-                },
-                required: ["fileName"],
-            },
-        },
-        {
-            name: "delete_File",
-            description: "Delete a file",
-            parameters: {
-                type: Type.OBJECT,
-                properties: {
-                    fileName: { type: Type.STRING },
-                },
-                required: ["fileName"],
-            },
-        },
-        {
-            name: "list_Files",
-            description: "List all files",
-            parameters: {
-                type: Type.OBJECT,
-                properties: {},
-            },
-        },
-        {
-            name: "append_File",
-            description: "Append content to file",
-            parameters: {
-                type: Type.OBJECT,
-                properties: {
-                    fileName: { type: Type.STRING },
-                    content: { type: Type.STRING },
-                },
-                required: ["fileName", "content"],
-            },
-        },
-        {
-            name: "generate_MultiPageWebsite",
-            description: "Generate multi-page HTML/CSS/JS website.",
-            parameters: {
-                type: Type.OBJECT,
-                properties: {
-                    pages: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                name: { type: Type.STRING },
-                                content: { type: Type.STRING },
-                            },
-                            required: ["name", "content"],
-                        },
-                    },
-                    folder: {
-                        type: Type.STRING,
-                    },
-                },
-                required: ["pages", "folder"],
-            },
-        },
-        {
-            name: "get_preview_link",
-            description: "Get preview link for generated website",
-            parameters: {
-                type: Type.OBJECT,
-                properties: {
-                    folder: { type: Type.STRING },
-                },
-                required: ["folder"],
-            },
-        },
-    ],
-};
+
 
 const toolFunctions: Record<
     string,
@@ -217,6 +125,10 @@ If a preview is requested, call get_preview_link with the folder used in generat
 type Part = {
     text?: string;
     functionResponse?: { name: string; response: { result: string } };
+    functionCall?: {
+        name: string;
+        args: Record<string, unknown>;
+    };
 };
 type Message = {
     role: "user" | "model";
@@ -245,11 +157,113 @@ export async function runGemini(
                 msg.parts && Array.isArray(msg.parts) && msg.parts.length > 0
         );
 
-        const response = await ai.models.generateContent({
+        // Type assertion added here to suppress TS errors on response properties.
+        const response = (await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: validInput,
-            config: { tools: [tools], systemInstruction },
-        });
+            config: {
+                tools: [
+                    {
+                        functionDeclarations: [
+                            {
+                                name: "create_File",
+                                description: "Create file with content",
+                                parameters: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        fileName: { type: Type.STRING },
+                                        content: { type: Type.STRING },
+                                    },
+                                    required: ["fileName", "content"],
+                                },
+                            },
+                            {
+                                name: "read_File",
+                                description: "Read a file",
+                                parameters: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        fileName: { type: Type.STRING },
+                                    },
+                                    required: ["fileName"],
+                                },
+                            },
+                            {
+                                name: "delete_File",
+                                description: "Delete a file",
+                                parameters: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        fileName: { type: Type.STRING },
+                                    },
+                                    required: ["fileName"],
+                                },
+                            },
+                            {
+                                name: "list_Files",
+                                description: "List all files",
+                                parameters: {
+                                    type: Type.OBJECT,
+                                    properties: {},
+                                },
+                            },
+                            {
+                                name: "append_File",
+                                description: "Append content to file",
+                                parameters: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        fileName: { type: Type.STRING },
+                                        content: { type: Type.STRING },
+                                    },
+                                    required: ["fileName", "content"],
+                                },
+                            },
+                            {
+                                name: "generate_MultiPageWebsite",
+                                description:
+                                    "Generate multi-page HTML/CSS/JS website.",
+                                parameters: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        pages: {
+                                            type: Type.ARRAY,
+                                            items: {
+                                                type: Type.OBJECT,
+                                                properties: {
+                                                    name: { type: Type.STRING },
+                                                    content: {
+                                                        type: Type.STRING,
+                                                    },
+                                                },
+                                                required: ["name", "content"],
+                                            },
+                                        },
+                                        folder: {
+                                            type: Type.STRING,
+                                        },
+                                    },
+                                    required: ["pages", "folder"],
+                                },
+                            },
+                            {
+                                name: "get_preview_link",
+                                description:
+                                    "Get preview link for generated website",
+                                parameters: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        folder: { type: Type.STRING },
+                                    },
+                                    required: ["folder"],
+                                },
+                            },
+                        ],
+                    },
+                ],
+                systemInstruction,
+            },
+        })) as any;
 
         const functionCall = response.functionCalls?.[0];
         if (functionCall) {
