@@ -60,7 +60,7 @@ const generate_MultiPageWebsite = ({
     const folderRoot = path.join(baseDir, "generated-site");
     const siteDir = path.join(folderRoot, folder);
 
-    if (!fs.existsSync(folderRoot)) fs.mkdirSync(folderRoot);
+    if (!fs.existsSync(folderRoot)) fs.mkdirSync(folderRoot),{ recursive: true };
     if (!fs.existsSync(siteDir)) fs.mkdirSync(siteDir, { recursive: true });
 
     for (const { name, content } of pages) {
